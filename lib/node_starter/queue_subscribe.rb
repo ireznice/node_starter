@@ -56,11 +56,11 @@ module NodeStarter
       return unless params
 
       NodeStarter.logger.info("Received START with build_id: #{params['build_id']}")
-      
-      config = params['config'].merge(build_missing_node_config_values)
+      guid = SecureRandom.uuid
+      config = params['config'].merge(build_node_config_extension(guid))
 
       starter = NodeStarter::Starter.new(
-        params['build_id'], config, params['enqueue_data'], build_node_api_address)
+        params['build_id'], config, params['enqueue_data'], build_node_api_address(guid))
 
       begin
         starter.start_node_process
@@ -113,10 +113,10 @@ module NodeStarter
       end
     end
 
-    def build_missing_node_config_values
+    def build_node_config_extension(guid)
       {
-        id: @guid,
-        base_address: 'http://' + ip_address + ':' + port + '/' + @guid # TODO: research dependencies
+        id: guid,
+        base_address: 'http://' + ip_address + ':' + port + '/AVG.Ddtf.Uss/Node/' + guid
       }
     end
 
@@ -124,17 +124,12 @@ module NodeStarter
       Socket.ip_address_list.detect { |intf| intf.ipv4_private? }.ip_address
     end
 
-    def guid
-      @guid ||= SecureRandom.uuid
-      @guid
-    end
-
     def port
       '8732'
     end
 
-    def build_node_api_address
-      'http://' + ip_address + ':' + port + '/' + @guid + '/api/'
+    def build_node_api_address(guid)
+      'http://' + ip_address + ':' + port + '/' + guid + '/api/'
     end
   end
 end
