@@ -74,7 +74,7 @@ describe NodeStarter::QueueSubscribe do
   end
 
   describe '#run' do
-    let(:payload) { { build_id: 123 } }
+    let(:payload) { { build_id: 123, config: {} } }
     let(:starter) { double('starter') }
 
     before do
@@ -93,7 +93,7 @@ describe NodeStarter::QueueSubscribe do
       it 'does not acknowledge and rejects the message' do
         expect(consumer).to receive(:ack).exactly(0).times
         expect(consumer).to receive(:reject).exactly(1).times
-        subject.send :run, {}, '{}'
+        subject.send :run, {}, { config: {} }.to_json
       end
     end
 
@@ -131,6 +131,22 @@ describe NodeStarter::QueueSubscribe do
         expect(consumer).to receive(:reject).exactly(1).times
         subject.send :run, {}, '{'
         sleep 0.1
+      end
+
+      it 'passes correct config to Starter' do
+        allow(SecureRandom).to receive(:uuid) { 'xuuq' }
+        allow(subject).to receive(:ip_address) { 'xuq' }
+
+        subject.send :run, {}, { config: {} }.to_json
+        expect(NodeStarter::Starter).to have_received(:new).with(
+          nil,
+          {
+            id: 'xuuq',
+            base_address: 'http://xuq:8732/AVG.Ddtf.Uss/Node/xuuq'
+          },
+          nil,
+          'http://xuq:8732/xuuq/api/'
+        )
       end
     end
   end

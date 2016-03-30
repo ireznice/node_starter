@@ -56,11 +56,13 @@ module NodeStarter
       return unless params
 
       NodeStarter.logger.info("Received START with build_id: #{params['build_id']}")
-      guid = SecureRandom.uuid
-      config = params['config'].merge(build_node_config_extension(guid))
+      uuid = SecureRandom.uuid
 
       starter = NodeStarter::Starter.new(
-        params['build_id'], config, params['enqueue_data'], build_node_api_address(guid))
+        params['build_id'],
+        params['config'].merge(build_node_config_extension(uuid)),
+        params['enqueue_data'],
+        build_node_api_address(uuid))
 
       begin
         starter.start_node_process
@@ -113,23 +115,19 @@ module NodeStarter
       end
     end
 
-    def build_node_config_extension(guid)
+    def build_node_config_extension(uuid)
       {
-        id: guid,
-        base_address: 'http://' + ip_address + ':' + port + '/AVG.Ddtf.Uss/Node/' + guid
+        id: uuid,
+        base_address: 'http://' + ip_address + ':8732/AVG.Ddtf.Uss/Node/' + uuid
       }
     end
 
     def ip_address
-      Socket.ip_address_list.detect { |intf| intf.ipv4_private? }.ip_address
+      Socket.ip_address_list.detect(&:ipv4_private?).ip_address
     end
 
-    def port
-      '8732'
-    end
-
-    def build_node_api_address(guid)
-      'http://' + ip_address + ':' + port + '/' + guid + '/api/'
+    def build_node_api_address(uuid)
+      'http://' + ip_address + ':8732/' + uuid + '/api/'
     end
   end
 end
